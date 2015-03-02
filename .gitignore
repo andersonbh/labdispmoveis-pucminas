@@ -1,9 +1,6 @@
-out/
-*.iws
-*.iml
-*.ipr
-atlassian-ide-plugin.xml
-local.properties
-.gradle/
-build/
-.idea/
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
