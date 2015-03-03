@@ -19,9 +19,20 @@
     </AutoCompleteTextView>
 
     <Button
-            android:id="@+id/button1"
+            android:id="@+id/ligar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Ligar" />
+    <Button
+            android:id="@+id/email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="E-mail" />
+    <Button
+            android:id="@+id/mapa"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mapa" />
+    
 
 </LinearLayout>
