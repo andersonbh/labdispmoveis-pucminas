@@ -1,4 +1,4 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:tools="http://schemas.android.com/tools"
               android:id="@+id/ll_ShowContactsMain"
               android:layout_width="match_parent"
@@ -12,27 +12,37 @@
               tools:context=".MainActivity" >
 
     <AutoCompleteTextView
-            android:id="@+id/mmWhoNo"
+            android:id="@+id/autoComplete"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:hint="Selecione um contato.." >
+            android:hint="Digite aqui um contato.." >
     </AutoCompleteTextView>
+
+    <Button
+            android:id="@+id/email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="E-mail"
+            android:layout_alignTop="@+id/mapa"
+            android:layout_centerHorizontal="true"/>
 
     <Button
             android:id="@+id/ligar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Ligar" />
-    <Button
-            android:id="@+id/email"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="E-mail" />
+            android:text="Ligar"
+            android:layout_alignTop="@+id/email"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"/>
+
     <Button
             android:id="@+id/mapa"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Mapa" />
+            android:text="Mapa"
+            android:layout_below="@+id/autoComplete"
+            android:layout_alignRight="@+id/autoComplete"
+            android:layout_alignEnd="@+id/autoComplete"/>
     
 
-</LinearLayout>
+</RelativeLayout>
