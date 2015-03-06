@@ -132,12 +132,12 @@ public class MainActivity extends ActionBarActivity implements OnItemClickListen
                         ContactsContract.CommonDataKinds.Phone.CONTACT_ID +" = "+ contatoId,
                         null, null);
                 while (telefones.moveToNext()){
-                    String phonenumero = telefones.getString(
+                    String numeroTel = telefones.getString(
                             telefones.getColumnIndex(
                                     ContactsContract.CommonDataKinds.Phone.NUMBER));
                     Map<String, String> NomeTel = new HashMap<String, String>();
                     NomeTel.put("Nome", nomeContato);
-                    NomeTel.put("Telefone", phonenumero);
+                    NomeTel.put("Telefone", numeroTel);
                     NomeTel.put("Id", contatoId);
                     listaContatos.add(NomeTel);
                 }
