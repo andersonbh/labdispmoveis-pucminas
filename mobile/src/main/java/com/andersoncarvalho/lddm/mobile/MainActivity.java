@@ -1,220 +1,188 @@
 package com.andersoncarvalho.lddm.mobile;
 
-import android.content.ContentResolver;
-import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
+import android.app.Activity;
 import android.os.Bundle;
-import android.provider.ContactsContract;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
-import android.view.Menu;
-import android.view.View;
-import android.widget.*;
-import android.widget.AdapterView.OnItemClickListener;
+import android.view.*;
+import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ListView;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-public class MainActivity extends ActionBarActivity implements OnItemClickListener {
+public class MainActivity extends ActionBarActivity
+        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
 
-    private ArrayList<Map<String, String>> listaContatos;
-    private SimpleAdapter mAdapter;
-    private AutoCompleteTextView autoComplete;
-    private String Ident, numero, endereco;
-    private Button ligar, mandarEmail, mapa;
-    String [] emailContato;
+    /**
+     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
+     */
+    private NavigationDrawerFragment mNavigationDrawerFragment;
+
+    /**
+     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
+     */
+    private CharSequence mTitle;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        listaContatos = new ArrayList<Map<String, String>>();
-        montarLista();
-        autoComplete = (AutoCompleteTextView) findViewById(R.id.autoComplete);
-        ligar=(Button) findViewById(R.id.ligar);
-        mandarEmail=(Button) findViewById(R.id.email);
-        mandarEmail.setEnabled(false);
-        mapa=(Button) findViewById(R.id.mapa);
-        mapa.setEnabled(false);
-        mAdapter = new SimpleAdapter(this, listaContatos, R.layout.contato,
-                new String[] { "Nome", "Telefone" }, new int[] {
-                R.id.nomeCont, R.id.numeroCont });
-        autoComplete.setAdapter(mAdapter);
-        Ident = "";
-        endereco = "";
-        autoComplete.setOnItemClickListener(new OnItemClickListener() {
 
-            @Override
-            public void onItemClick(AdapterView<?> av, View arg1, int index,
-                                    long arg3) {
-                Map<String, String> map = (Map<String, String>) av.getItemAtPosition(index);
-                String name  = map.get("Nome");
-                numero = map.get("Telefone");
-                Ident = map.get("Id");
-                autoComplete.setText(name + " " +numero);
-                emailContato = null;
-                endereco = null;
-                lerDadosContato(Ident);
-            }
-        });
+        mNavigationDrawerFragment = (NavigationDrawerFragment)
+                getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+        mTitle = getTitle();
 
-        ligar.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try {
-                    if (autoComplete != null) {
-                        startActivity(new Intent(Intent.ACTION_CALL, Uri
-                                .parse("tel:" +numero)));
-                    }else if(autoComplete != null && numero.toString().length()==0){
-                        Toast.makeText(getApplicationContext(), "O Numero é invalido", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (Exception e) {
-                    Log.e("Erro", "Erro ao tentar efetuar a ligacao " + e.getMessage(),
-                            e);
-                }
-            }
-        });
-        mandarEmail.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try {
-                    if (autoComplete != null) {
-                        if(emailContato != null) {
-                            Intent intent = new Intent(Intent.ACTION_SENDTO);
-                            intent.setData(Uri.parse("mailto:"));
-                            intent.putExtra(Intent.EXTRA_EMAIL, emailContato);
-                            Log.d("Tentando enviar email para", emailContato[0]);
-                            if (intent.resolveActivity(getPackageManager()) != null) {
-                                startActivity(intent);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e("Erro", "Erro ao enviar email " + e.getMessage(),
-                            e);
-                }
-            }
-        });
-        mapa.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try {
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse(endereco));
-                    Log.d("Tentando ir para o endereco", endereco);
-                    if (intent.resolveActivity(getPackageManager()) != null) {
-                        startActivity(intent);
-                    }
-                } catch (Exception e) {
-                    Log.e("Erro", "Erro ao enviar endereco para mapa " + e.getMessage(),
-                            e);
-                }
-            }
-        });
+        // Set up the drawer.
+        mNavigationDrawerFragment.setUp(
+                R.id.navigation_drawer,
+                (DrawerLayout) findViewById(R.id.drawer_layout));
     }
 
-    public void montarLista() {
-        listaContatos.clear();
-        Cursor contato = getContentResolver().query(
-                ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
-        while (contato.moveToNext()) {
-            String nomeContato = contato.getString(contato
-                    .getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            String contatoId = contato.getString(contato
-                    .getColumnIndex(ContactsContract.Contacts._ID));
-            String temTelefone = contato
-                    .getString(contato
-                            .getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
-
-            if ((Integer.parseInt(temTelefone) > 0)){
-                Cursor telefones = getContentResolver().query(
-                        ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                        null,
-                        ContactsContract.CommonDataKinds.Phone.CONTACT_ID +" = "+ contatoId,
-                        null, null);
-                while (telefones.moveToNext()){
-                    String phonenumero = telefones.getString(
-                            telefones.getColumnIndex(
-                                    ContactsContract.CommonDataKinds.Phone.NUMBER));
-                    Map<String, String> NomeTel = new HashMap<String, String>();
-                    NomeTel.put("Nome", nomeContato);
-                    NomeTel.put("Telefone", phonenumero);
-                    NomeTel.put("Id", contatoId);
-                    listaContatos.add(NomeTel);
-                }
-                telefones.close();
-            }
-        }
-        contato.close();
+    @Override
+    public void onNavigationDrawerItemSelected(int position) {
+        // update the main content by replacing fragments
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction()
+                .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
+                .commit();
     }
 
-
-    public void lerDadosContato(String ident) {
-        ContentResolver cr = getContentResolver();
-                    // pegar email
-                    Cursor emailCur = cr.query(
-                            ContactsContract.CommonDataKinds.Email.CONTENT_URI,
-                            null,
-                            ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = ?",
-                            new String[]{ident}, null);
-                    mandarEmail.setEnabled(false);
-                    while (emailCur.moveToNext()) {
-                        String email = emailCur.getString(
-                                emailCur.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
-                        if(emailContato == null) {
-                            mandarEmail.setEnabled(true);
-                            emailContato = new String[] { email };
-                            System.out.println("Email " + email);
-                        }
-                    }
-                    emailCur.close();
-
-                    // Pegar observacoes
-//                        String obs = ContactsContract.Data.CONTACT_ID + " = ? AND " + ContactsContract.Data.MIMETYPE + " = ?";
-//                        String[] noteWhereParams = new String[]{id,
-//                                ContactsContract.CommonDataKinds.Note.CONTENT_ITEM_TYPE};
-//                        Cursor obsCur = cr.query(ContactsContract.Data.CONTENT_URI, null, obs, noteWhereParams, null);
-//                        if (obsCur.moveToFirst()) {
-//                            String note = obsCur.getString(obsCur.getColumnIndex(ContactsContract.CommonDataKinds.Note.NOTE));
-//                            System.out.println("Observações: " + note);
-//                        }
-//                        obsCur.close();
-
-                    // Pegar endereço
-                    Cursor endCur = cr.query(ContactsContract.Data.CONTENT_URI,
-                            null, ContactsContract.Data.CONTACT_ID + " = ?",
-                            new String[]{ident}, null);
-                    mapa.setEnabled(false);
-                    while (endCur.moveToNext()) {
-                        String rua = endCur.getString(
-                                endCur.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.STREET));
-                        String cidade = endCur.getString(
-                                endCur.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.CITY));
-                        String estado = endCur.getString(
-                                endCur.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.REGION));
-                        String pais = endCur.getString(
-                                endCur.getColumnIndex(ContactsContract.CommonDataKinds.StructuredPostal.COUNTRY));
-                        if(rua != null && cidade != null && estado != null && endereco == null) {
-                            System.out.println(rua + cidade + estado);
-                            mapa.setEnabled(true);
-                            endereco = "geo:0,0?q=" + rua + "+" + cidade + "+" + estado;
-                        }
-                    }
-                    endCur.close();
-
-
-
+    public void onSectionAttached(int number) {
+        String[] partidos = getResources().getStringArray(R.array.partidos_array);
+        mTitle = partidos[number - 1];
     }
+
+    public void restoreActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setTitle(mTitle);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+            // Only show items in the action bar relevant to this screen
+            // if the drawer is not showing. Otherwise, let the drawer
+            // decide what to show in the action bar.
+            getMenuInflater().inflate(R.menu.main, menu);
+            restoreActionBar();
+            return true;
+        }
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
-    public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-        // TODO Auto-generated method stub
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+        ListView lista;
+        ImageView imagem;
+        //        ImageView principal;
+        ImageButton btn_twitter;
+        String[] dados;
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public PlaceholderFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main, container,
+                    false);
+            int i = getArguments().getInt(ARG_SECTION_NUMBER);
+            lista = (ListView) rootView.findViewById(R.id.politicos_partido);
+            imagem = (ImageView) rootView.findViewById(R.id.imageView1);
+//            principal = (ImageView)rootView.findViewById(R.id.image);
+            btn_twitter = (ImageButton) rootView.findViewById(R.id.imageButton);
+            dados = new String[1];
+
+            setarListadePartidos(i);
+
+            return rootView;
+
+        }
+
+        public void setarListadePartidos(int i) {
+            lista.setVisibility(View.VISIBLE);
+            lista.setActivated(true);
+            imagem.setVisibility(View.VISIBLE);
+            imagem.setImageDrawable(getResources().getDrawable(R.drawable.ic_twitter));
+            switch (i) {
+                case 1: {
+                    dados = getResources().getStringArray(R.array.PMDB);
+                    break;
+                }
+                case 2: {
+                    dados = getResources().getStringArray(R.array.PP);
+                    break;
+                }
+                case 3: {
+                    dados = getResources().getStringArray(R.array.PSDB);
+                    break;
+                }
+                case 4: {
+                    dados = getResources().getStringArray(R.array.PTB);
+                    break;
+                }
+                case 5: {
+                    dados = getResources().getStringArray(R.array.PT);
+                    break;
+                }
+                case 6: {
+                    dados = getResources().getStringArray(R.array.Apartidario);
+                    break;
+                }
+            }
+
+            if (lista.isActivated()) {
+                lista.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, dados));
+            }
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            ((MainActivity) activity).onSectionAttached(
+                    getArguments().getInt(ARG_SECTION_NUMBER));
+        }
     }
 
 }
