@@ -8,10 +8,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.*;
-import android.widget.ArrayAdapter;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ListView;
+import android.widget.*;
 
 
 public class MainActivity extends ActionBarActivity
@@ -143,31 +140,36 @@ public class MainActivity extends ActionBarActivity
         public void setarListadePartidos(int i) {
             lista.setVisibility(View.VISIBLE);
             lista.setActivated(true);
-            imagem.setVisibility(View.VISIBLE);
-            imagem.setImageDrawable(getResources().getDrawable(R.drawable.ic_twitter));
+
             switch (i) {
                 case 1: {
                     dados = getResources().getStringArray(R.array.PMDB);
+                    imagem.setImageDrawable(getResources().getDrawable(R.drawable.pmdb));
                     break;
                 }
                 case 2: {
                     dados = getResources().getStringArray(R.array.PP);
+                    imagem.setImageDrawable(getResources().getDrawable(R.drawable.pp));
                     break;
                 }
                 case 3: {
                     dados = getResources().getStringArray(R.array.PSDB);
+                    imagem.setImageDrawable(getResources().getDrawable(R.drawable.psdb));
                     break;
                 }
                 case 4: {
                     dados = getResources().getStringArray(R.array.PTB);
+                    imagem.setImageDrawable(getResources().getDrawable(R.drawable.ptb));
                     break;
                 }
                 case 5: {
                     dados = getResources().getStringArray(R.array.PT);
+                    imagem.setImageDrawable(getResources().getDrawable(R.drawable.pt));
                     break;
                 }
                 case 6: {
                     dados = getResources().getStringArray(R.array.Apartidario);
+                    imagem.setImageDrawable(getResources().getDrawable(R.drawable.republicabrasil));
                     break;
                 }
             }
