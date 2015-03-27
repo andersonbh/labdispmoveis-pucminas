@@ -1,6 +1,8 @@
 package com.andersoncarvalho.lddm.mobile;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -23,6 +25,8 @@ public class MainActivity extends ActionBarActivity
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
+
+    static String url = "https://twitter.com/search?q=%23lavajato&src=typd";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,10 +85,10 @@ public class MainActivity extends ActionBarActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -100,7 +104,6 @@ public class MainActivity extends ActionBarActivity
         private static final String ARG_SECTION_NUMBER = "section_number";
         ListView lista;
         ImageView imagem;
-        //        ImageView principal;
         ImageButton btn_twitter;
         String[] dados;
 
@@ -127,15 +130,22 @@ public class MainActivity extends ActionBarActivity
             int i = getArguments().getInt(ARG_SECTION_NUMBER);
             lista = (ListView) rootView.findViewById(R.id.politicos_partido);
             imagem = (ImageView) rootView.findViewById(R.id.imageView1);
-//            principal = (ImageView)rootView.findViewById(R.id.image);
             btn_twitter = (ImageButton) rootView.findViewById(R.id.imageButton);
             dados = new String[1];
 
+            btn_twitter.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Uri uri = Uri.parse(url);
+                    Intent webintent = new Intent(Intent.ACTION_VIEW,uri);
+                    startActivity(webintent);
+                }
+            });
+
             setarListadePartidos(i);
-
             return rootView;
-
         }
+
 
         public void setarListadePartidos(int i) {
             lista.setVisibility(View.VISIBLE);
