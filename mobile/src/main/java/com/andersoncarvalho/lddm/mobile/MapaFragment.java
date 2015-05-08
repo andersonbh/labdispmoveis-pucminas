@@ -5,6 +5,10 @@ import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
@@ -24,29 +28,44 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.*;
 import com.google.android.gms.maps.model.*;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by anderson on 08/05/15.
  */
 
 public class MapaFragment extends Fragment implements View.OnClickListener, ConnectionCallbacks,
         OnConnectionFailedListener,
-        LocationListener {
+        LocationListener,SensorEventListener {
 
     /**
      * The fragment argument representing the section number for this
      * fragment.
      */
-    private static final String ARG_SECTION_NUMBER = "section_number", LOG = "LDDM";
+    private static final String LOG = "LDDM";
+    private SensorManager sensorManager;
+    private Sensor sensor;
+    // Gravity force on x, y, z axis
+    private float gravity[] = new float[3];
 
+    private int counter;
+    private long ultimoMovimento = 0;
+    private int idMovimento = 1;
+
+    private static final float ALPHA = 0.8f;
+    private static final int THRESHOLD = 7;
+    private static final int SHAKE_INTERVAL = 500; // ms
+    private static final int COUNTS = 2;
     public GoogleMap mMap;
     MapView mMapView;
-    int ZOOM = 18, BEARING, opcaoFragment;
+    int ZOOM = 18, BEARING;
     private CameraPosition cp;
     private static View v;
     LatLng posicao;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
-    Marker minhaloc;
     Location localizacao;
 
     @Override
@@ -54,7 +73,6 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         callConnection();
-        opcaoFragment = getArguments().getInt(ARG_SECTION_NUMBER);
         if (v != null) {
             ViewGroup parent = (ViewGroup) v.getParent();
             if (parent != null) {
@@ -77,18 +95,11 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
         mMap = mMapView.getMap();
         //Monta o mapa personalizado.
         montarMapa();
+        sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         return v;
     }
 
-    private void getLocalizacao() {
-        if (localizacao != null) {
-            LatLng latLng = new LatLng(localizacao.getLatitude(), localizacao.getLongitude());
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 18);
-            mMap.animateCamera(cameraUpdate);
-        }else{
-           Log.d(LOG,"sem localização");
-        }
-    }
 
     public void zoomTop(LatLng posicao, int zoom) {
         if (cp == null) {
@@ -115,6 +126,19 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
         view.draw(canvas);
 
         return bitmap;
+    }
+
+    public void criarMarcadorShake() {
+        View marker = ((LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.custom_marker_layout, null);
+        DateFormat dataLoc = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        mMap.addMarker(new MarkerOptions().
+                position(new LatLng(localizacao.getLatitude(), localizacao.getLongitude())).
+                title("Movimento brusco " + idMovimento).
+                snippet("Horário: " + dataLoc.format(new Date(localizacao.getTime())) +
+                        "\nPrecisão: " + localizacao.getAccuracy()).
+                        alpha(0.97f).
+                        icon(BitmapDescriptorFactory.fromBitmap(createDrawableFromView(this.getActivity(), marker))));
+        idMovimento++;
     }
 
     public void montarMapa() {
@@ -181,10 +205,7 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(LOG, "LocationChanged!!");
         localizacao = location;
-        minhaloc.setPosition(new LatLng(location.getLatitude(), location.getLongitude()));
-        minhaloc.setSnippet("Precisão: " + (int) location.getAccuracy() + " metros");
     }
 
     @Override
@@ -198,6 +219,9 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
             mMap.moveCamera(CameraUpdateFactory.newCameraPosition(cp));
             cp = null;
         }
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_NORMAL);
     }
 
     @Override
@@ -211,6 +235,7 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
         if (mGoogleApiClient != null) {
             stopLocationUpdate();
         }
+        sensorManager.unregisterListener(this);
 
     }
 
@@ -306,4 +331,46 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
             }
 
     }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        float acceleration = maxAcceleration(sensorEvent);
+        Sensor mySensor = sensorEvent.sensor;
+        if (mySensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            if (Math.abs(acceleration) >= THRESHOLD) {
+                long agora = System.currentTimeMillis();
+                if ((agora - ultimoMovimento) > SHAKE_INTERVAL) {
+                    ultimoMovimento = agora;
+                    criarMarcadorShake();
+                } else
+                    ultimoMovimento = System.currentTimeMillis();
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    private float maxAcceleration(SensorEvent event) {
+        // Low-pass filter
+        gravity[0] = ALPHA * gravity[0] + (1 - ALPHA) * event.values[0]; // x axis
+        gravity[1] = ALPHA * gravity[1] + (1 - ALPHA) * event.values[1]; // y axis
+        gravity[2] = ALPHA * gravity[2] + (1 - ALPHA) * event.values[2]; // z axis
+
+        // High-pass filter
+        float linear_acceleration[] = new float[3];
+        linear_acceleration[0] = event.values[0] - gravity[0];
+        linear_acceleration[1] = event.values[1] - gravity[1];
+        linear_acceleration[2] = event.values[2] - gravity[2];
+        float max = Math.max(Math.max(linear_acceleration[0], linear_acceleration[1])
+                ,linear_acceleration[2]);
+
+        if (max == linear_acceleration[1]) {
+            return linear_acceleration[1];
+        } else {
+            return 0.0f;
+        }
+    } // Go to onSensorChanged method above
 }
