@@ -5,5 +5,8 @@
     <string name="action_example">Example action</string>
 
     <string name="action_settings">Configurações</string>
+    <string name="google_maps_key">AIzaSyB8559XYBzYyXwIrq167zfboY49TqgGcOA</string>
+    <color name="padrao">#27a586</color>
+    <color name="padrao_escuro">#1b6d59</color>
 
 </resources>

@@ -50,14 +50,12 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
     // Gravity force on x, y, z axis
     private float gravity[] = new float[3];
 
-    private int counter;
     private long ultimoMovimento = 0;
     private int idMovimento = 1;
 
     private static final float ALPHA = 0.8f;
     private static final int THRESHOLD = 7;
     private static final int SHAKE_INTERVAL = 500; // ms
-    private static final int COUNTS = 2;
     public GoogleMap mMap;
     MapView mMapView;
     int ZOOM = 18, BEARING;
@@ -129,16 +127,19 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
     }
 
     public void criarMarcadorShake() {
-        View marker = ((LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.custom_marker_layout, null);
-        DateFormat dataLoc = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        mMap.addMarker(new MarkerOptions().
-                position(new LatLng(localizacao.getLatitude(), localizacao.getLongitude())).
-                title("Movimento brusco " + idMovimento).
-                snippet("Horário: " + dataLoc.format(new Date(localizacao.getTime())) +
-                        "\nPrecisão: " + localizacao.getAccuracy()).
-                        alpha(0.97f).
-                        icon(BitmapDescriptorFactory.fromBitmap(createDrawableFromView(this.getActivity(), marker))));
+        if(localizacao != null) {
+            View marker = ((LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.custom_marker_layout, null);
+            DateFormat dataLoc = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            mMap.addMarker(new MarkerOptions().
+                    position(new LatLng(localizacao.getLatitude(), localizacao.getLongitude())).
+                    title("Movimento brusco " + idMovimento).
+                    snippet("Horário: " + dataLoc.format(new Date(localizacao.getTime())) +
+                            "\nPrecisão: " + localizacao.getAccuracy()).
+                    alpha(0.97f).
+                    icon(BitmapDescriptorFactory.fromBitmap(createDrawableFromView(this.getActivity(), marker))));
+         zoomTop(new LatLng(localizacao.getLatitude(), localizacao.getLongitude()),15);
         idMovimento++;
+        }
     }
 
     public void montarMapa() {
@@ -151,7 +152,7 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
                 mMap.getUiSettings().setZoomControlsEnabled(true);
                 //toolbar de ir para desativado.
                 mMap.getUiSettings().setMapToolbarEnabled(false);
-                mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+                mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
                 //Habilitar botao de compasso
                 mMap.getUiSettings().setCompassEnabled(true);
 
@@ -307,20 +308,6 @@ public class MapaFragment extends Fragment implements View.OnClickListener, Conn
     public void onLowMemory() {
         super.onLowMemory();
         mMapView.onLowMemory();
-    }
-
-    public void MostrarDistancia(LatLng position, String nomMarker) {
-        Location temp = new Location("temp");
-        temp.setLatitude(position.latitude);
-        temp.setLongitude(position.longitude);
-        int distancia = distanciaAproximadaemMetros(temp);
-        if (distancia != -1) {
-            Toast toast = Toast.makeText(getActivity(), "Você está a aproximadamente " + distancia + " metros do marker " + nomMarker, Toast.LENGTH_LONG);
-            toast.show();
-        } else {
-            Toast toast = Toast.makeText(getActivity(), "Não foi possível calcular sua distância até o marker " + nomMarker, Toast.LENGTH_LONG);
-            toast.show();
-        }
     }
 
     public int distanciaAproximadaemMetros(Location local) {
